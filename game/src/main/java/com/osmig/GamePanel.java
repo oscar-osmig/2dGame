@@ -1,5 +1,7 @@
 package com.osmig;
 
+import entity.Player;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -9,7 +11,7 @@ public class GamePanel extends JPanel implements Runnable{
     final int originalTileSize = 16; // 16x16 px tile size
     final int scale = 3; // helps to scale our original size tile
 
-    final int tileSize = originalTileSize * scale; // 48x48 px tile
+    public final int tileSize = originalTileSize * scale; // 48x48 px tile
     // decide how many tiles horizontally and verticall
     final int maxTileCol = 16;
     final int getMaxTileRow = 12;
@@ -21,6 +23,7 @@ public class GamePanel extends JPanel implements Runnable{
 
     KeyHandler keyh = new KeyHandler();
     Thread gameThread;
+    Player player = new Player(this, keyh);
 
     // set players default position
     int playerX = 100;
@@ -44,39 +47,35 @@ public class GamePanel extends JPanel implements Runnable{
     @Override
     public void run() {
         double drawInterval = 1000000000/FPS; // 0.01666 seconds
-        double nextDrawTime = System.nanoTime() + drawInterval;
+        double delta = 0;
+        long lastTime = System.nanoTime();
+        long currentTime;
+        long timer = 0;
+        int drawCount = 0;
 
         while(gameThread != null){ // game loop
+            currentTime = System.nanoTime();
 
-            update();  // 1. UPDATE: update information such as character position
-
-            repaint(); // 2. DRAW: draw the screen  with updated information
-
-            try {
-                double remainingTime = nextDrawTime - System.nanoTime();
-                remainingTime = remainingTime/1000000; // sleep takes in milliseconds, so we converted to it to avoid issues
-                if (remainingTime < 0){
-                    remainingTime = 0;
-                }
-                Thread.sleep((long)remainingTime);
-                nextDrawTime += drawInterval;
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+            delta += (currentTime - lastTime) / drawInterval;
+            timer += (currentTime - lastTime);
+            lastTime = currentTime;
+            if(delta > 1) {
+                update();  // 1. UPDATE: update information such as character position
+                repaint(); // 2. DRAW: draw the screen  with updated information
+                delta--;
+                drawCount++;
+            }
+            if(timer >= 1000000000){
+                //System.out.print("FPS: " + drawCount + "\n");
+                drawCount = 0;
+                timer = 0;
             }
 
         }
     }
 
     public void update(){
-        if(keyh.upPressed == true){
-            playerY -= playerSpeed;
-        } else if (keyh.downPressed == true) {
-            playerY += playerSpeed;
-        } else if (keyh.leftPressed == true) {
-            playerX -= playerSpeed;
-        } else if (keyh.rightPressed == true) {
-            playerX += playerSpeed;
-        }
+        player.update();
 
     }
 
@@ -84,9 +83,7 @@ public class GamePanel extends JPanel implements Runnable{
         super.paintComponent(g); // super means parent class, jpanel
 
         Graphics2D g2 = (Graphics2D)g;
-
-        g2.setColor(Color.white);
-        g2.fillRect(playerX, playerY, tileSize, tileSize);
+        player.draw(g2);
 
         g2.dispose();
 
