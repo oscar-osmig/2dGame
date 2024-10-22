@@ -1,6 +1,7 @@
 package com.osmig;
 
 import entity.Player;
+import tile.TileManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,22 +14,21 @@ public class GamePanel extends JPanel implements Runnable{
 
     public final int tileSize = originalTileSize * scale; // 48x48 px tile
     // decide how many tiles horizontally and verticall
-    final int maxTileCol = 16;
-    final int getMaxTileRow = 12;
-    final  int screenWidth = tileSize * maxTileCol; // 768px
-    final int screenHeight = tileSize * getMaxTileRow; // 576px
+    public final int maxScreenCol = 16;
+    public final int maxScreenRow = 12;
+    public final  int screenWidth = tileSize * maxScreenCol; // 768px
+    public final int screenHeight = tileSize * maxScreenRow; // 576px
 
     // FPS
     int FPS = 60;
+
+    // Tile manager
+    TileManager tileM = new TileManager(this);
 
     KeyHandler keyh = new KeyHandler();
     Thread gameThread;
     Player player = new Player(this, keyh);
 
-    // set players default position
-    int playerX = 100;
-    int playerY = 100;
-    int playerSpeed = 4;
 
     // constructor
     public  GamePanel(){
@@ -55,7 +55,7 @@ public class GamePanel extends JPanel implements Runnable{
 
         while(gameThread != null){ // game loop
             currentTime = System.nanoTime();
-
+//            System.out.println("some meme");
             delta += (currentTime - lastTime) / drawInterval;
             timer += (currentTime - lastTime);
             lastTime = currentTime;
@@ -83,6 +83,8 @@ public class GamePanel extends JPanel implements Runnable{
         super.paintComponent(g); // super means parent class, jpanel
 
         Graphics2D g2 = (Graphics2D)g;
+        tileM.draw(g2); // draw tile before player
+
         player.draw(g2);
 
         g2.dispose();
